@@ -22,3 +22,9 @@ SQL优化技术
 18）如果列类型是字符串，那一定要在条件中将数据使用引号引用起来,否则不使用索引
 19）如果mysql估计使用全表扫描要比使用索引快,则不使用索引
 </pre>
+
+为排序使用索引
+
+![](https://i.imgur.com/msPgvCY.png)
+
+https://blog.csdn.net/tuesdayma/article/details/81783199
