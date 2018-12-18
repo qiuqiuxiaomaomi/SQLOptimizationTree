@@ -40,5 +40,8 @@ https://blog.csdn.net/tuesdayma/article/details/81783199
 6）数据库主从分离，读写分离，降低读写针对同一表时的压力
 7）explain分析SQL语句，查看执行计划，分析索引是否用得上，分析扫描行数。
 8）查看Mysql执行日志，看看是否有其他方面的问题。
-9）
+</pre>
+
+<pre>
+子查询 联合join查询效率
 </pre>
