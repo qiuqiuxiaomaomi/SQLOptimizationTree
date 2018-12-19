@@ -1,6 +1,8 @@
 # SQLOptimizationTree
 SQL优化技术
 
+![](https://i.imgur.com/tPBlMI3.png)
+
 <pre>
 1) 最左前缀法则
 2）在索引列上做类型转换，函数变换等操作
