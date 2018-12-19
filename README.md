@@ -96,5 +96,15 @@ Mysql深度分页
 </pre>
 
 <pre>
+查询锁表信息
+      当前运行的所有事务
+      select * from information_schema.innodb_trx
+      当前出现的锁
+      select * from information_schema.innodb_locks
+      锁等待的对应关系
+      select * from information_schema.innodb_lock_waits  
+</pre>
+
+<pre>
 子查询 联合join查询效率
 </pre>
