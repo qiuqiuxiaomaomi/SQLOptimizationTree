@@ -45,5 +45,45 @@ https://blog.csdn.net/tuesdayma/article/details/81783199
 </pre>
 
 <pre>
+Mysql深度分页
+
+      一般刚开始学SQL的时候，会这样写 
+         SELECT * FROM table ORDER BY id LIMIT 1000, 10; 
+      但在数据达到百万级的时候，这样写会慢死 
+         SELECT * FROM table ORDER BY id LIMIT 1000000, 10; 
+      也许耗费几十秒
+ 
+      网上很多优化的方法是这样的 
+         SELECT * FROM table WHERE id >= (SELECT id FROM table LIMIT 1000000, 1) LIMIT 10; 
+      是的，速度提升到0.x秒了，看样子还行了
+      可是，还不是完美的！
+ 
+      以下这句才是完美的！ 
+          SELECT * FROM table WHERE id BETWEEN 1000000 AND 1000010; 
+      比上面那句，还要再快5至10倍
+
+
+      另外，如果需要查询 id 不是连续的一段，最佳的方法就是先找出 id ，然后用 in 查询 
+           SELECT * FROM table WHERE id IN(10000, 100000, 1000000...); 
+      再分享一点
+      查询字段一较长字符串的时候，表设计时要为该字段多加一个字段,如，存储网址的字段
+          查询的时候，不要直接查询字符串，效率低下，应该查诡该字串的crc32或md5。
+
+
+      在我们的例子中，我们知道id字段是主键，自然就包含了默认的主键索引。现在让我们看看利用覆盖索引的查询效果如何：
+      这次我们之间查询最后一页的数据（利用覆盖索引，只包含id列），如下：
+         select id from order limit 800000, 20 0.2秒
+         相对于查询了所有列的37.44秒，提升了大概100多倍的速度
+
+      那么如果我们也要查询所有列，有两种方法，一种是id>=的形式，另一种就是利用join，看下实际情况：
+         SELECT * FROM order WHERE ID > =(select id from order limit 800000, 1) limit 20
+      查询时间为0.2秒，简直是一个质的飞跃啊，哈哈
+
+      另一种写法
+         SELECT * FROM order a JOIN (select id from order limit 800000, 20) b ON a.ID = b.id
+      查询时间也很短
+</pre>
+
+<pre>
 子查询 联合join查询效率
 </pre>
