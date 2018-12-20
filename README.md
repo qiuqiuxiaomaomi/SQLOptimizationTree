@@ -255,6 +255,14 @@ Using index
         2，查询列不完全被索引覆盖，查询条件完全可以使用到索引（进行索引查找）
 </pre>
 
+![](https://i.imgur.com/UCgL2Vh.png)
+
+<pre>
+Explain详细解析
+
+      
+</pre>
+
 <pre>
 子查询 联合join查询效率
 </pre>
