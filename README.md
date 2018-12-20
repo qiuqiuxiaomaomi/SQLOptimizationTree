@@ -106,5 +106,64 @@ Mysql深度分页
 </pre>
 
 <pre>
+Mysql一次插入几万条数据处理方式
+
+      1）Insert批量插入，调整max_allowed_packet
+      2) 开启事务，增大innodb_log_buffer_size，增加单事务提交日志量。
+      3）主键顺序插入，效率更高
+      5）对要插入的数据进行分组批量插入
+
+      INSERT INTO table (column1, column2, ..., column_n) VALUES 
+      (value11, value12, ..., value1n), 
+      (value21, value22, ... value2n), ..., (value_n1, value_n2, ... value_nn)
+ 
+ 
+      常用的插入语句如：
+      INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+             VALUES ('0', 'userid_0', 'content_0', 0);
+      INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+             VALUES ('1', 'userid_1', 'content_1', 1);
+      修改成：
+ 
+
+      INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+      VALUES ('0', 'userid_0', 'content_0', 0), ('1', 'userid_1', 'content_1', 1);
+ 
+      修改后的插入操作能够提高程序的插入效率。这里第二种SQL执行效率高的主要原因是合并后日志量（MySQL的binlog和innodb的事务让
+      日志）减少了，降低日志刷盘的数据量和频率，从而提高效率。通过合并SQL语句，同时也能减少SQL语句解析的次数，减少网络传
+      输的IO。
+
+      
+      数据有序插入。
+          数据有序的插入是指插入记录在主键上是有序排列，例如datetime是记录的主键：
+          INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+                 VALUES ('1', 'userid_1', 'content_1', 1);
+          INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+                 VALUES ('0', 'userid_0', 'content_0', 0);
+          INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+                 VALUES ('2', 'userid_2', 'content_2',2);
+          修改成：
+ 
+          INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+                 VALUES ('0', 'userid_0', 'content_0', 0);
+          INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+                 VALUES ('1', 'userid_1', 'content_1', 1);
+          INSERT INTO `insert_table` (`datetime`, `uid`, `content`, `type`) 
+                 VALUES ('2', 'userid_2', 'content_2',2);
+          由于数据库插入时，需要维护索引数据，无序的记录会增大维护索引的成本。我们可以参照InnoDB使用的B+tree索引，如果每次插
+          入记录都在索引的最后面，索引的定位效率很高，并且对索引调整较小；如果插入的记录在索引中间，需要B+tree进行分裂合并等
+          处理，会消耗比较多计算资源，并且插入记录的索引定位效率会下降，数据量较大时会有频繁的磁盘操作。
+
+         
+      从测试结果来看，该优化方法的性能有所提高，但是提高并不是很明显。
+ 
+      SQL语句是有长度限制，在进行数据合并在同一SQL中务必不能超过SQL长度限制，通过max_allowed_packet配置可以修改，默认是1M，
+      测试时修改为8M。
+ 
+      事务需要控制大小，事务太大可能会影响执行的效率。MySQL有innodb_log_buffer_size配置项，超过这个值会把innodb的数据刷到
+      磁盘中，这时，效率会有所下降。所以比较好的做法是，在数据达到这个这个值前进行事务提交。
+</pre>
+
+<pre>
 子查询 联合join查询效率
 </pre>
