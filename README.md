@@ -165,5 +165,96 @@ Mysql一次插入几万条数据处理方式
 </pre>
 
 <pre>
+Mysql配置优化提高SQL查询写入性能
+
+      提高数据库插入性能的中心思想：
+              1）尽量将数据一次性写入到Data File
+              2）减少数据库的checkpoint 操作
+
+      innodb_buffer_pool_size 
+           如果用Innodb，那么这是一个重要变量。相对于MyISAM来说，Innodb对于
+        buffer size更敏感。MySIAM可能对于大数据量使用默认的key_buffer_size也还好，
+        但Innodb在大数据量时用默认值就感觉在爬了。 Innodb的缓冲池会缓存数据和索引，所
+        以不需要给系统的缓存留空间，如果只用Innodb，可以把这个值设为内存的70%-80%。
+        和 key_buffer相同，如果数据量比较小也不怎么增加，那么不要把这个值设太高也可以提
+        高内存的使用率。
+
+      innodb_log_file_size 
+           此配置项作用设定innodb 数据库引擎UNDO日志的大小；从而减少数据库checkpoint
+        操作。
+
+           对于写很多尤其是大数据量时非常重要。要注意，大的文件提供更高的性能，但数据库恢
+        复时会用更多的时间。我一般用64M-512M，具体取决于服务器的空间。
+
+      innodb_log_buffer_size 
+           此配置项作用设定innodb 数据库引擎写日志缓存区；将此缓存段增大可以减少数据库写
+        数据文件次数
+
+           默认值对于多数中等写操作和事务短的运用都是可以的。如 果经常做更新或者使用了
+        很多blob数据，应该增大这个值。但太大了也是浪费内存，因为1秒钟总会 flush（这个词
+        的中文怎么说呢？）一次，所以不需要设到超过1秒的需求。8M-16M一般应该够了。小的运用
+        可以设更小一点。
+
+      innodb_flush_log_at_trx_commit 
+           0: Write the log buffer to the log file and flush the log file 
+              every second, but do nothing at transaction commit. 
+           1：the log buffer is written out to the log file at each 
+              transaction commit and the flush to disk operation is performed 
+              on the log file 
+           2：the log buffer is written out to the file at each commit, but 
+              the flush to disk operation is not performed on it 
+
+           抱怨Innodb比MyISAM慢 100倍？那么你大概是忘了调整这个值。默认值1的意思是每一
+        次事务提交或事务外的指令都需要把日志写入（flush）硬盘，这是很费时的。特别是使用
+        电 池供电缓存（Battery backed up cache）时。设成2对于很多运用，特别是从MyISAM
+        表转过来的是可以的，它的意思是不写入硬盘而是写入系统缓存。日志仍然会每秒flush到
+        硬 盘，所以你一般不会丢失超过1-2秒的更新。设成0会更快一点，但安全方面比较差，即
+        使MySQL挂了也可能会丢失事务的数据。而值2只会在整个操作系统 挂了时才可能丢数据。
+
+      innodb_autoextend_increment 配置由于默认8M 调整到 128M
+           此配置项作用主要是当tablespace 空间已经满了后，需要MySQL系统需要自动扩展多
+        少空间，每次tablespace 扩展都会让各个SQL 处于等待状态。增加自动扩展Size可以减
+        少tablespace自动扩展次数。
+
+      提高数据库插入性能中心思想： 
+          1、尽量使数据库一次性写入Data File 
+          2、减少数据库的checkpoint 操作 
+          3、程序上尽量缓冲数据，进行批量式插入与提交 
+          4、减少系统的IO冲突
+
+      提高数据库读取速度
+</pre>
+
+<pre>
+Mysql表查询优化经验
+</pre>
+
+<pre>
+Using index 
+      查询的列被索引覆盖，并且where筛选条件是索引的是前导列
+
+      Using where Using index
+        1:查询的列被索引覆盖，并且where筛选条件是索引列之一但是不是索引的不是前导列，
+          Extra中为Using where; Using index，意味着无法直接通过索引查找来查询到符
+          合条件的数据
+        2:查询的列被索引覆盖，并且where筛选条件是索引列前导列的一个范围，同样意味着无法
+          直接通过索引查找查询到符合条件的数据
+     NULL（既没有Using index，也没有Using where Using index，也没有using where）
+        1，查询的列未被索引覆盖，并且where筛选条件是索引的前导列，
+　　     意味着用到了索引，但是部分字段未被索引覆盖，必须通过“回表”来实现，不是纯粹地用
+         到了索引，也不是完全没用到索引，Extra中为NULL(没有信息)
+     Using where
+        1，查询的列未被索引覆盖，where筛选条件非索引的前导列，Extra中为Using where
+        2，查询的列未被索引覆盖，where筛选条件非索引列，Extra中为Using where
+
+        using where 意味着通过索引或者表扫描的方式进程where条件的过滤，
+　　    反过来说，也就是没有可用的索引查找，当然这里也要考虑索引扫描+回表与表扫描的代价。
+　　    这里的type都是all，说明MySQL认为全表扫描是一种比较低的代价。
+     Using index condition
+        1，-- 查询的列不全在索引中，where条件中是一个前导列的范围
+        2，查询列不完全被索引覆盖，查询条件完全可以使用到索引（进行索引查找）
+</pre>
+
+<pre>
 子查询 联合join查询效率
 </pre>
